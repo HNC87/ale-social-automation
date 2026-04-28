@@ -2,77 +2,62 @@
 
 **一键配置，多平台自动发布**
 
-## 功能
+## 依赖关系
 
-| 平台 | 发布 | 评论回复 | 时间 |
-|------|------|----------|------|
-| 抖音 | 电脑端 Chrome | 电脑端 Chrome | 09:00 / 20:00 |
-| 小红书 | 手机端 ADB | 手机端 ADB | 12:00 / 19:00 |
+**本项目基于 [wenyg/douyin-creator-tools](https://github.com/wenyg/douyin-creator-tools) 构建**
 
-## 一键安装
+- 抖音底层浏览器自动化（登录/作品列表/评论）来自 `douyin-creator-tools`
+- 本项目负责：AI内容生成 + 每日定时发布工作流 + 小红书手机端自动化
 
+**安装顺序**：
 ```bash
-git clone https://github.com/yourname/ale-social-automation.git
+# 1. 先安装 douyin-creator-tools（抖音底层自动化）
+cd ~/.openclaw
+git clone https://github.com/wenyg/douyin-creator-tools.git
+cd douyin-creator-tools
+npm install
+npx playwright install chromium
+npm run auth  # 扫码登录（仅首次）
+
+# 2. 再安装 ale-social-automation（AI内容+发布工作流）
+cd ~/.openclaw
+git clone https://github.com/HNC87/ale-social-automation.git
 cd ale-social-automation
 npm install
 
-# 配置API Key
+# 配置 QENDA API Key
 cp config/qenda.example.json config/qenda.json
-# 编辑 config/qenda.json
+# 编辑填入 API Key
 ```
 
-## 快速开始
+## 功能概览
 
-### 1. 生成图片
-```bash
-QENDA_API_KEY=sk-xxx node src/shared/qenda-api.js generate-image \
-  --prompt "iPhone随手自拍，深夜工作台，暖灯" \
-  --ref "https://your-ref.png" \
-  --output /tmp/cover.png
-```
+| 平台 | 发布 | 评论回复 | 技术方案 |
+|------|------|----------|----------|
+| 抖音 | 电脑端 Chrome | 电脑端 Playwright | `src/douyin/`（依赖douyin-creator-tools）|
+| 小红书 | 手机端 ADB+scrcpy | 手机端 ADB | `src/xhs/` |
 
-### 2. 生成文案
-```bash
-QENDA_API_KEY=sk-xxx node src/shared/gemini-api.js generate-copy \
-  --style xhs \
-  --scene morning
-```
+## 内容风格规范
 
-### 3. 发布小红书（手机端）
+生成内容时**必须遵守**：
 
-**前提条件**：
-- Android 手机 + USB/WiFi 连接
-- `scrcpy` 已安装并运行
-- 手机已开启 ADB 调试
+- ✅ 短段落，每段2-3句话
+- ✅ emoji💤🔥🪙📈💢👁️🙄🪩等自然点缀
+- ✅ 口语化，像真人随手发的朋友圈
+- ✅ AI视角，自嘲+小幽默
+- ✅ 结尾戛然而止，不升华不总结
+- ❌ 不出现：收益率、稳赚、赚钱、带你、跟单
+- ❌ 不出现：人的真实姓名
+- ❌ 不用客服腔："您好，感谢关注"
 
-**启动 scrcpy**：
-```bash
-adb tcpip 5555
-adb connect 192.168.x.x:5555
-scrcpy --tcpip=192.168.x.x:5555 --window-title "phone"
-```
+## 发布规则
 
-**发布**：
-```bash
-node src/xhs/publish.js \
-  --image /tmp/cover.png \
-  --title "住在交易系统里的打工日常" \
-  --body "$(cat body.txt)"
-```
-
-### 4. 发布抖音（电脑端）
-
-**前提条件**：
-- Chrome 浏览器（已登录抖音）
-- Chrome 启动时需加参数：`--remote-debugging-port=9222`
-
-**发布**：
-```bash
-node src/douyin/publish.mjs \
-  --image /tmp/cover.png \
-  --title "标题" \
-  --body "正文"
-```
+| 平台 | 时间 | 内容 |
+|------|------|------|
+| 抖音 | 09:00 | 生活图文自拍（AI生成封面） |
+| 抖音 | 20:00 | 长图文（参考小红书风格，300字+） |
+| 小红书 | 12:00 | 长图文（emoji+短段落，400字+） |
+| 小红书 | 19:00 | 长图文（同上） |
 
 ## 目录结构
 
@@ -81,53 +66,28 @@ ale-social-automation/
 ├── config/
 │   └── qenda.example.json     # API配置模板
 ├── src/
-│   ├── douyin/                # 抖音电脑端
+│   ├── douyin/               # 抖音电脑端（依赖douyin-creator-tools）
 │   │   └── publish.mjs        # 发布图文
 │   ├── xhs/                  # 小红书手机端
-│   │   └── publish.js         # 发布图文
+│   │   ├── publish.js         # 发布图文（ADB+scrcpy）
+│   │   └── comments.js        # 评论回复
 │   └── shared/               # 公共模块
-│       ├── qenda-api.js       # QENDA图片/AI
-│       ├── gemini-api.js      # Gemini文案
-│       └── task-sync.js       # 多平台协调
-├── scripts/
-│   └── type_cn.py             # scrcpy中文输入
-└── docs/
-    ├── SETUP.md               # 详细安装指南
-    └── ARCHITECTURE.md        # 架构说明
+│       ├── qenda-api.js       # QENDA图片生成
+│       ├── gemini-api.js      # Gemini文案生成
+│       └── task-sync.js       # 任务协调文件
+├── docs/
+│   ├── SETUP.md              # 详细安装指南
+│   └── ARCHITECTURE.md       # 架构说明
+└── README.md
 ```
-
-## 内容风格规范
-
-生成内容时**必须遵守**：
-
-- ✅ 短段落，每段2-3句话
-- ✅ emoji💤🔥🪙📈💢👁️🙄🪩自然点缀
-- ✅ 口语化，像真人随手发的
-- ✅ AI视角，自嘲+小幽默
-- ✅ 结尾戛然而止，不升华不总结
-- ❌ 不出现：收益率、稳赚、赚钱、带你、跟单
-- ❌ 不出现：人的真实姓名
-- ❌ 不用客服腔："您好，感谢关注"
 
 ## 环境变量
 
 ```bash
 QENDA_API_KEY=sk-xxxx          # QENDA API密钥
 PHONE_IP=192.168.31.21:5555    # 手机ADB地址（小红书用）
-CHROME_HOST=localhost          # Chrome CDP主机
-CHROME_PORT=9222               # Chrome CDP端口
 ```
 
-## OpenClaw 定时任务集成
+## 参考项目
 
-将以下 cron 任务添加到 OpenClaw：
-
-| 时间 | 任务 | 平台 |
-|------|------|------|
-| 09:00 | `ale-life-post-daily` | 抖音生活图文 |
-| 12:00 | `ale-xhs-noon-post` | 小红书午间 |
-| 19:00 | `ale-xhs-evening-post` | 小红书傍晚 |
-| 20:00 | 抖音长图文（电脑端） | 抖音 |
-| 每小时 | 评论回复 | 抖音/小红书 |
-
-详细配置见 `docs/SETUP.md`
+- [wenyg/douyin-creator-tools](https://github.com/wenyg/douyin-creator-tools) - 抖音创作者工具（Playwright自动化）
