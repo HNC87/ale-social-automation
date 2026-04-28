@@ -1,0 +1,14 @@
+node_modules/
+*.log
+*.png
+*.jpg
+.DS_Store
+config/qenda.json
+.env
+/tmp/
+*.mp4
+*.mov
+cover.png
+cover*.png
+ale_*.png
+wangcai*.png

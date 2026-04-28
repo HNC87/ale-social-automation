@@ -1,0 +1,19 @@
+{
+  "name": "ale-social-automation",
+  "version": "1.0.0",
+  "description": "阿莱社交平台自动化运营工具集",
+  "type": "module",
+  "scripts": {
+    "generate:image": "node src/shared/qenda-api.js generate-image",
+    "generate:copy": "node src/shared/gemini-api.js generate-copy",
+    "publish:xhs": "node src/xhs/publish.js",
+    "publish:douyin": "node src/douyin/publish.mjs",
+    "comments:douyin": "node src/douyin/comments.mjs"
+  },
+  "dependencies": {
+    "puppeteer": "^21.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
